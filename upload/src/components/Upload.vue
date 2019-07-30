@@ -36,6 +36,12 @@ export default {
       }
     }
   },
+  mounted(){
+    const fileDom = this.$refs.file;
+    fileDom.addEventListener('change',()=>{
+      this.process = 0;
+    })
+  },
   methods: {
     // md5加密 规则 修改时间+文件名称+最后修改时间
     md5File(file){
@@ -71,7 +77,6 @@ export default {
       const fileSize = file.size; // 文件大小
       const chunkSize =  1024 * 1024;  // 分块大小
       const count = Math.ceil(fileSize / chunkSize); // 切成的片数
-
       this.$http({
         url: 'http://localhost:3003/fileSize',
         method: 'post',
@@ -124,10 +129,16 @@ export default {
         data: form
       }).then((res)=>{
         this.process = Math.floor(idx/count *100);
-        if(res.data.code == 40010 ) {
-          console.log(idx);
-          console.log(count);
-          this.process = 100;
+        if(res.data.code === 40010 ) {
+          this.$http({
+            url: `http://localhost:3003/merge?filename=${file.name}`,
+          }).then((res)=> {
+            if(res.data.code === 200) {
+              this.process = 100;
+            } else {
+              this.process = 99;   // 合并失败 进度条99 恶心人
+            }
+          })
           return;
         }
         if(this.pauseFlag) {
@@ -157,12 +168,6 @@ export default {
         this.sliceUpload(idx,count,fileSize,file,chunkSize)
       }
     },
-    mergeRequest(){          // 通知服务端合并文件
-      this.$http({
-        url: '',
-        
-      })
-    }
   }
 }
 </script>
