@@ -1,17 +1,14 @@
 <template>
-  <div>
-    <div class="">
-      <input type="file" ref="file">
-      <button @click="upload">上传文件</button>
-      <button @click="pause">{{pauseTxt}}</button>
-    </div>
-    <div class="process1">
-      <span>校验文件进度</span>
-    </div>
-    <div class="process2">
-      <span>上传文件进度 {{process}} % </span>
-    </div>
-
+  <div class="container">
+      
+      <div class="body" >
+        <input type="file" ref="file">
+        <z-button @click="upload" type="primary">上传文件</z-button>
+        <z-button @click="pause" type="warn">{{pauseTxt}}</z-button>
+        <div class="process2">
+          <span>上传文件进度 {{process}} % </span>
+        </div>
+      </div>
   </div>
 </template>
 <script>
@@ -40,6 +37,8 @@ export default {
     const fileDom = this.$refs.file;
     fileDom.addEventListener('change',()=>{
       this.process = 0;
+      this.pauseFlag = true;
+      this.pauseTxt = '暂停'
     })
   },
   methods: {
@@ -121,7 +120,6 @@ export default {
       let form = new FormData();
       form.append("total",count);
       form.append("idx",idx);
-   
       form.append("data",sliceFile);
       this.$http({
         url: 'http://localhost:3003/upload',
@@ -172,5 +170,12 @@ export default {
 }
 </script>
 <style>
-
+.container{
+  display: flex;
+  justify-content: center;
+}
+.body{
+  display: flex;
+  align-items: center;
+}
 </style>
