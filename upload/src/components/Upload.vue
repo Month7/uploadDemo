@@ -36,6 +36,7 @@ export default {
   mounted(){
     const fileDom = this.$refs.file;
     fileDom.addEventListener('change',()=>{
+      console.log('fileDom change!')
       this.process = 0;
       this.pauseFlag = true;
       this.pauseTxt = '暂停'
@@ -74,7 +75,7 @@ export default {
       }
       let file = fileDom.files[0];
       const fileSize = file.size; // 文件大小
-      const chunkSize =  1024 * 1024;  // 分块大小
+      const chunkSize =  1024;  // 分块大小
       const count = Math.ceil(fileSize / chunkSize); // 切成的片数
       this.$http({
         url: 'http://localhost:3003/fileSize',
@@ -151,6 +152,15 @@ export default {
           }
         }
         
+      }).catch((e)=>{        // 发生断网等意外
+        this.pauseData = {
+          idx: idx,
+          count: count,
+          fileSize: fileSize,
+          file: file,
+          chunkSize: chunkSize
+        }
+        this.pause();
       })
     },
     // 暂停/继续 上传
@@ -159,11 +169,13 @@ export default {
         this.pauseTxt = '继续';
         this.pauseFlag = false;
       } else {
+      
+        const {idx,count,fileSize,file,chunkSize } = this.pauseData;
+        
+        this.sliceUpload(idx,count,fileSize,file,chunkSize)
+        this.pauseData = {};
         this.pauseTxt = '暂停';
         this.pauseFlag = true;
-        const {idx,count,fileSize,file,chunkSize } = this.pauseData;
-        this.pauseData = {};
-        this.sliceUpload(idx,count,fileSize,file,chunkSize)
       }
     },
   }
