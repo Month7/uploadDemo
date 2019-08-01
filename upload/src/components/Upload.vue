@@ -13,7 +13,6 @@
 </template>
 <script>
 import SparkMD5 from 'spark-md5'
-import { fips } from 'crypto';
 export default {
   name: 'Upload',
   data(){
@@ -44,28 +43,28 @@ export default {
   },
   methods: {
     // md5加密 规则 修改时间+文件名称+最后修改时间
-    md5File(file){
-      return new Promise((resolve,reject)=> {
-        this.fileReader.onload = (e) => {
-          this.spark.append(e.target.result);
-          resolve(this.spark.end())
-        }
-      })
-    },
+    // md5File(file){
+    //   return new Promise((resolve,reject)=> {
+    //     this.fileReader.onload = (e) => {
+    //       this.spark.append(e.target.result);
+    //       resolve(this.spark.end())
+    //     }
+    //   })
+    // },
 
     // 校验md5
-    checkMd5(fileName,fileMd5Value){
-      this.$http({
-        url: 'http://localhost:3003/checkMd5',
-        method: 'post',
-        data: {
-          fileName: fileName,
-          fileDom: fileMd5Value
-        }
-      }).then((res)=>{
-        console.log(res);
-      })
-    },
+    // checkMd5(fileName,fileMd5Value){
+    //   this.$http({
+    //     url: 'http://localhost:3003/checkMd5',
+    //     method: 'post',
+    //     data: {
+    //       fileName: fileName,
+    //       fileDom: fileMd5Value
+    //     }
+    //   }).then((res)=>{
+    //     console.log(res);
+    //   })
+    // },
     // 上传
     async upload(){
       const fileDom = this.$refs.file;
@@ -75,44 +74,16 @@ export default {
       }
       let file = fileDom.files[0];
       const fileSize = file.size; // 文件大小
-      const chunkSize =  1024;  // 分块大小
+      const chunkSize =  1024 * 1024;  // 分块大小
       const count = Math.ceil(fileSize / chunkSize); // 切成的片数
       this.$http({
         url: 'http://localhost:3003/fileSize',
         method: 'post',
         data: count
-      }).then((res)=>{
-        this.sliceUpload(0,count,fileSize,file,chunkSize)
+      }).then(( res )=>{
+        if(res.data && res.data.code === 200)
+          this.sliceUpload(0,count,fileSize,file,chunkSize)
       })
-      
-      // for(let i=0;i<count;i++){
-      //   let end = i+1>count? count : i+1;
-      //   let sliceFile = file.slice(i * chunkSize,end * chunkSize);
-      //   this.$http({
-      //     url: 'http://localhost:3003/upload',
-      //     method: 'post',
-      //     data: sliceFile
-      //   }).then((res)=>{
-      //     console.log(res);
-      //   })
-      // }
-
-      // var formData = new FormData();
-      // this.fileReader.readAsArrayBuffer(file);
-      // const res = await this.md5File(file)
-      // console.log(res)
-
-      // this.$http({
-      //   url: 'http://localhost:3003/upload',
-      //   method: 'post',
-      //   data: formData,
-      //   headers: {'Content-type':'application/json; charset=utf-8'}
-      // }).then((res)=>{
-      //   console.log(res);
-      // })
-      // console.log(file.size);
-      // console.log(file.slice(0,1024));
-      // console.log(file);
     },
     // 分片上传
     sliceUpload(idx,count,fileSize,file,chunkSize){
@@ -122,6 +93,7 @@ export default {
       form.append("total",count);
       form.append("idx",idx);
       form.append("data",sliceFile);
+      form.append("filename",file.name)
       this.$http({
         url: 'http://localhost:3003/upload',
         method: 'post',
@@ -152,7 +124,8 @@ export default {
           }
         }
         
-      }).catch((e)=>{        // 发生断网等意外
+      }).catch((err)=>{        // 发生断网等意外
+        console.log('err',err);
         this.pauseData = {
           idx: idx,
           count: count,
@@ -169,9 +142,7 @@ export default {
         this.pauseTxt = '继续';
         this.pauseFlag = false;
       } else {
-      
         const {idx,count,fileSize,file,chunkSize } = this.pauseData;
-        
         this.sliceUpload(idx,count,fileSize,file,chunkSize)
         this.pauseData = {};
         this.pauseTxt = '暂停';

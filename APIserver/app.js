@@ -57,6 +57,18 @@ app.post('/fileSize',(req,res)=>{
     code: 200
   })
 })
+
+// 判断文件是否存在
+const isFileExist = (filePath) => {
+  return new Promise((resolve,reject) => {
+    fs.access(filePath,(err) => {
+      if(err) {
+        reject(false);
+      } 
+      resolve(true);
+    })
+  })
+}
 const copyFile = (oldSrc,newSrc) => {
   fs.rename(oldSrc,newSrc,err =>{
     if(err) {
@@ -88,6 +100,16 @@ app.post('/upload',(req,res)=>{
         // console.log(err);
         return;
       }
+      console.log(fields.filename);
+      isFileExist(__dirname + '/uploads/' + fields.filename).then(()=>{
+        res.send({
+          code: 40010,
+          msg: '上传完毕'
+        })
+        return;
+      }).catch((e)=>{
+
+      })
       let { total,idx} = fields;
       if(Number(idx) >= Number(total)) {
         res.send({
