@@ -43,14 +43,10 @@ export default {
   },
   methods: {
     // md5加密 规则 修改时间+文件名称+最后修改时间
-    // md5File(file){
-    //   return new Promise((resolve,reject)=> {
-    //     this.fileReader.onload = (e) => {
-    //       this.spark.append(e.target.result);
-    //       resolve(this.spark.end())
-    //     }
-    //   })
-    // },
+    md5File(file){
+      this.spark.append(file)
+      return this.spark.end()
+    },
 
     // 校验md5
     // checkMd5(fileName,fileMd5Value){
@@ -66,20 +62,26 @@ export default {
     //   })
     // },
     // 上传
-    async upload(){
+    upload(){
       const fileDom = this.$refs.file;
       if(fileDom.files.length == 0) {
         alert('您还未选择任何文件!');
         return;
       }
       let file = fileDom.files[0];
+      const fileMd5 = this.md5File(file);
+      console.log('fileMd5',fileMd5);
       const fileSize = file.size; // 文件大小
       const chunkSize =  1024 * 1024;  // 分块大小
       const count = Math.ceil(fileSize / chunkSize); // 切成的片数
+      // 先传文件名和文件名md5
       this.$http({
-        url: 'http://localhost:3003/fileSize',
+        url: 'http://localhost:3003/fileMd5',
         method: 'post',
-        data: count
+        data: {
+          fileName: file.name,
+          fileMd5: fileMd5
+        }
       }).then(( res )=>{
         if(res.data && res.data.code === 200)
           this.sliceUpload(0,count,fileSize,file,chunkSize)
@@ -123,7 +125,6 @@ export default {
             chunkSize: chunkSize
           }
         }
-        
       }).catch((err)=>{        // 发生断网等意外
         console.log('err',err);
         this.pauseData = {

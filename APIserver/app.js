@@ -49,10 +49,11 @@ const mergeFiles = async (toSrc,newFileName) => {
 
 
 
-
+let dir = ''
 var total = 0;
-app.post('/fileSize',(req,res)=>{
-  // console.log(req.body);
+app.post('/fileMd5',(req,res)=>{
+  let { fileName,fileMd5 } = req.body;
+  dir = '/' + fileMd5;
   res.send({
     code: 200
   })
@@ -78,18 +79,9 @@ const copyFile = (oldSrc,newSrc) => {
     }
   }) 
 }
-// 创建存放分片的临时文件夹
-const createDir = () => {
-  const arr = ['a','b','c','d','e','f','g','1','2','3','4','6','9']
-  let res = ''
-  for(let i=0;i<10;i++){
-    res += arr[parseInt(Math.random()*arr.length)]
-  }
-  let time = new Date().getTime().toString().substring(0,10)
-  return `/${res}${time}`
-}
+
 // var dir = '/test10'
-let dir = createDir();
+
 app.post('/upload',(req,res)=>{
   try {
     var form = new formidable.IncomingForm({
@@ -101,6 +93,7 @@ app.post('/upload',(req,res)=>{
         return;
       }
       console.log(fields.filename);
+      // 如果文件已经存在 则直接上传完毕
       isFileExist(__dirname + '/uploads/' + fields.filename).then(()=>{
         res.send({
           code: 40010,
@@ -108,9 +101,19 @@ app.post('/upload',(req,res)=>{
         })
         return;
       }).catch((e)=>{
-
       })
-      let { total,idx} = fields;
+      // 如果存放临时文件的文件夹存在,说明之前上传过但是未上传成功
+      isFileExist(__dirname + '/uploads' + dir).then(()=>{
+        res.send({
+          code: 40010,
+          msg: '上传完毕'
+        })
+        return;
+      }).catch((e)=>{
+      })
+
+
+      let { total,idx } = fields;
       if(Number(idx) >= Number(total)) {
         res.send({
           code: 40010,
@@ -147,28 +150,16 @@ app.get('/merge',(req,res)=>{
       return;
     });
   })
-  
-  // console.log('mergeFiles结果',res);
-  
 })
 
-app.listen(3003,()=>{console.log('express start at localhost:3003')})
+
 // 列出文件夹下的文件
 const listDir = (dir) => {
-  // fs.readdir(dir,(err,data) => {
-  //   if(err){
-  //     reject(err)
-  //   }
-  //   return data;
-  // })
   return new Promise((resolve,reject) => {
     fs.readdir(dir,(err,data) => {
       if(err){
         reject(err)
       }
-      // console.log(data);
-      
-      // console.log(data);
       resolve(data);
     })
   })
@@ -176,16 +167,16 @@ const listDir = (dir) => {
 // 创建文件夹
 const ensureDir = (dir) => {
   return new Promise(async (resolve,reject) => {
-
     const src = `${__dirname}/uploads${dir}`
-
     let result = await fs.ensureDir(src).then(()=>{
-
     }).catch((e)=>{
       console.log('ensureDir出错');
       console.log(e);
     });
- 
     resolve(true);
   })
 }
+
+
+
+app.listen(3003,()=>{console.log('express start at localhost:3003')})
