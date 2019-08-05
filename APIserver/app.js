@@ -54,6 +54,28 @@ var total = 0;
 app.post('/fileMd5',(req,res)=>{
   let { fileName,fileMd5 } = req.body;
   dir = '/' + fileMd5;
+  isFileExist(__dirname + '/uploads/' + fileName).then(()=>{
+    res.send({
+      code: 40010,
+      msg: '上传完毕'
+    })
+    return;
+  }).catch((err)=>{
+    
+  })
+  // 如果存放临时文件的文件夹存在,说明之前上传过但是未上传成功
+  // 返回给客户端已经上传过的文件
+  isFileExist(__dirname + '/uploads' + dir).then(()=>{
+    listDir(__dirname + '/uploads' + dir).then((data)=>{
+      res.send({
+        code: 40001,
+        msg: '之前已上传过',
+        data: data
+      })
+      return;
+    })
+  }).catch((e)=>{
+  })
   res.send({
     code: 200
   })
@@ -94,23 +116,15 @@ app.post('/upload',(req,res)=>{
       }
       console.log(fields.filename);
       // 如果文件已经存在 则直接上传完毕
-      isFileExist(__dirname + '/uploads/' + fields.filename).then(()=>{
-        res.send({
-          code: 40010,
-          msg: '上传完毕'
-        })
-        return;
-      }).catch((e)=>{
-      })
-      // 如果存放临时文件的文件夹存在,说明之前上传过但是未上传成功
-      isFileExist(__dirname + '/uploads' + dir).then(()=>{
-        res.send({
-          code: 40010,
-          msg: '上传完毕'
-        })
-        return;
-      }).catch((e)=>{
-      })
+      // isFileExist(__dirname + '/uploads/' + fields.filename).then(()=>{
+      //   res.send({
+      //     code: 40010,
+      //     msg: '上传完毕'
+      //   })
+      //   return;
+      // }).catch((e)=>{
+      // })
+      
 
 
       let { total,idx } = fields;
